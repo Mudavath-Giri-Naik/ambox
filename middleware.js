@@ -35,7 +35,8 @@ export async function middleware(request) {
         request.nextUrl.pathname.startsWith("/creator") ||
         request.nextUrl.pathname.startsWith("/editor") ||
         request.nextUrl.pathname.startsWith("/onboarding") ||
-        request.nextUrl.pathname.startsWith("/explore");
+        request.nextUrl.pathname.startsWith("/explore") ||
+        request.nextUrl.pathname.startsWith("/project");
 
     if (isProtectedRoute && !user) {
         const loginUrl = request.nextUrl.clone();
