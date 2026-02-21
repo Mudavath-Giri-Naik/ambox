@@ -18,17 +18,36 @@ export default function OnboardingPage() {
             const { data: { session } } = await supabase.auth.getSession();
 
             if (!session?.user) {
-                console.warn("[Onboarding] No user segment found, redirecting to login");
-                router.push("/login");
+                console.warn("[Onboarding] No session, redirecting to login");
+                router.replace("/login");
                 return;
             }
 
-            console.log("[Onboarding] User fetched:", session.user.id);
-            setUser(session.user);
+            const currentUser = session.user;
+            console.log("[Onboarding] User fetched:", currentUser.id);
 
-            // Pre-fill name if available from Google
-            if (session.user.user_metadata?.full_name) {
-                setName(session.user.user_metadata.full_name);
+            // Check if profile already exists (returning user shouldn't be here)
+            const { data: existingProfile } = await supabase
+                .from("profiles")
+                .select("role")
+                .eq("id", currentUser.id)
+                .maybeSingle();
+
+            if (existingProfile?.role) {
+                console.log("[Onboarding] Profile already exists with role:", existingProfile.role);
+                if (existingProfile.role === "creator") {
+                    router.replace("/creator/dashboard");
+                } else {
+                    router.replace("/editor/dashboard");
+                }
+                return;
+            }
+
+            setUser(currentUser);
+
+            // Prefill from Google metadata (STEP 4)
+            if (currentUser.user_metadata?.full_name) {
+                setName(currentUser.user_metadata.full_name);
             }
 
             setLoading(false);
@@ -37,6 +56,7 @@ export default function OnboardingPage() {
         fetchUser();
     }, [router]);
 
+    // STEP 5 — Profile INSERT (only here)
     const handleCreateProfile = async (role) => {
         if (!name.trim()) {
             setError("Please enter your name.");
@@ -44,7 +64,8 @@ export default function OnboardingPage() {
         }
         setError("");
         setSaving(true);
-        console.log(`[Onboarding] Creating profile for ${user.id} as a ${role}...`);
+
+        console.log("[Onboarding] Creating profile...");
 
         try {
             const { error: insertError } = await supabase.from("profiles").insert([
@@ -58,18 +79,22 @@ export default function OnboardingPage() {
             ]);
 
             if (insertError) {
-                console.error("[Onboarding] Insert Error:", insertError);
+                console.error("[Onboarding ERROR] Insert failed:", insertError.message);
                 throw insertError;
             }
 
-            console.log("[Onboarding] Profile created successfully. Redirecting...", role);
+            console.log("[Onboarding] Profile created successfully");
+
+            // STEP 6 — Redirect after insert
             if (role === "creator") {
-                router.push("/creator");
+                console.log("[Onboarding] Redirecting to dashboard");
+                router.replace("/creator/dashboard");
             } else {
-                router.push("/editor");
+                console.log("[Onboarding] Redirecting to dashboard");
+                router.replace("/editor/dashboard");
             }
         } catch (err) {
-            console.error("[Onboarding] Exception:", err);
+            console.error("[Onboarding ERROR] Exception:", err);
             setError("Failed to create profile. Please try again.");
             setSaving(false);
         }
