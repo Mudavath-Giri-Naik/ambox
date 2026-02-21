@@ -1,184 +1,126 @@
 "use client";
 
 import { useEffect, useState, useCallback, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import AuthGuard from "../components/AuthGuard";
-import ExploreTabs from "../components/ExploreTabs";
-import SearchInput from "../components/SearchInput";
-import UserCard from "../components/UserCard";
+import DashboardShell from "../components/DashboardShell";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function ExploreContent() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const role = searchParams.get("role") || "editor";
     const query = searchParams.get("q") || "";
 
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const [viewerRole, setViewerRole] = useState(null);
-    const [hasMore, setHasMore] = useState(true);
-    const [page, setPage] = useState(0);
+    const [search, setSearch] = useState(query);
 
-    const PAGE_SIZE = 12;
-
-    // 1. Fetch Viewer Role First
-    useEffect(() => {
-        const fetchViewerRole = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-                const { data: profile } = await supabase
-                    .from("profiles")
-                    .select("role")
-                    .eq("id", session.user.id)
-                    .maybeSingle();
-                if (profile) {
-                    setViewerRole(profile.role);
-                }
-            }
-        };
-        fetchViewerRole();
-    }, []);
-
-    // 2. Fetch Users Data based on role/query/page
-    const fetchUsers = useCallback(async (isLoadMore = false, currentPage = 0) => {
+    const fetchUsers = useCallback(async () => {
+        setLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) return; // Should be handled by AuthGuard
+        if (!session?.user) return;
 
-        const currentUserId = session.user.id;
+        let q = supabase
+            .from("profiles")
+            .select("*")
+            .eq("role", role)
+            .neq("id", session.user.id)
+            .order("created_at", { ascending: false });
 
-        if (isLoadMore) {
-            setLoadingMore(true);
-        } else {
-            setLoading(true);
-            setPage(0); // Reset page on new search/role
-        }
+        if (query.trim()) q = q.ilike("name", `%${query}%`);
 
-        try {
-            let queryBuilder = supabase
-                .from("profiles")
-                .select("*", { count: "exact" }) // Need count for pagination limits optionally
-                .eq("role", role)
-                .neq("id", currentUserId) // Exclude self
-                .order("created_at", { ascending: false }); // Sort newest first
-
-            // Apply Search Filter
-            if (query.trim() !== "") {
-                queryBuilder = queryBuilder.ilike("name", `%${query}%`);
-            }
-
-            // Pagination
-            const from = currentPage * PAGE_SIZE;
-            const to = from + PAGE_SIZE - 1;
-            queryBuilder = queryBuilder.range(from, to);
-
-            const { data, error } = await queryBuilder;
-
-            if (error) throw error;
-
-            if (isLoadMore) {
-                setUsers((prev) => [...prev, ...data]);
-            } else {
-                setUsers(data || []);
-            }
-
-            // Check if we hit the end of the list
-            setHasMore(data.length === PAGE_SIZE);
-
-        } catch (err) {
-            console.error("[Explore] Error fetching users:", err);
-        } finally {
-            setLoading(false);
-            setLoadingMore(false);
-        }
+        const { data } = await q;
+        setUsers(data || []);
+        setLoading(false);
     }, [role, query]);
 
-    // Refetch when Role or Query changes
-    useEffect(() => {
-        fetchUsers(false, 0);
-    }, [fetchUsers]);
+    useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-    const loadMore = () => {
-        const nextPage = page + 1;
-        setPage(nextPage);
-        fetchUsers(true, nextPage);
+    const handleSearch = (e) => {
+        e.preventDefault();
+        const params = new URLSearchParams();
+        params.set("role", role);
+        if (search.trim()) params.set("q", search.trim());
+        router.push(`/explore?${params.toString()}`);
+    };
+
+    const handleTabChange = (newRole) => {
+        const params = new URLSearchParams();
+        params.set("role", newRole);
+        if (search.trim()) params.set("q", search.trim());
+        router.push(`/explore?${params.toString()}`);
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6 md:p-12">
-            <div className="max-w-7xl mx-auto">
-                <div className="mb-10">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Explore Community</h1>
-                    <p className="text-gray-500">Find the perfect creator or editor for your next project.</p>
+        <DashboardShell>
+            <div className="p-6 space-y-6">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Explore Community</h1>
+                    <p className="text-muted-foreground text-sm">Find the perfect collaborator for your next project.</p>
                 </div>
 
-                {/* Filters and Search - Client side components */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
-                    <ExploreTabs />
-                    <SearchInput />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <Tabs value={role} onValueChange={handleTabChange}>
+                        <TabsList>
+                            <TabsTrigger value="editor">Editors</TabsTrigger>
+                            <TabsTrigger value="creator">Creators</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                    <form onSubmit={handleSearch} className="flex gap-2">
+                        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name..." className="w-48" />
+                        <Button type="submit" variant="outline" size="sm">Search</Button>
+                    </form>
                 </div>
 
-                {/* Content Area */}
                 {loading ? (
-                    // Skeleton Loading Grid
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {Array.from({ length: 8 }).map((_, i) => (
-                            <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center animate-pulse">
-                                <div className="h-20 w-20 rounded-full bg-gray-200 mb-4" />
-                                <div className="h-4 bg-gray-200 rounded w-1/2 mb-3" />
-                                <div className="h-3 bg-gray-200 rounded w-1/4 mb-4" />
-                                <div className="h-3 bg-gray-200 rounded w-3/4 mb-6" />
-                                <div className="h-10 bg-gray-200 rounded w-full mt-auto" />
-                            </div>
+                            <Card key={i} className="animate-pulse">
+                                <CardContent className="flex flex-col items-center p-6">
+                                    <div className="h-16 w-16 rounded-full bg-muted mb-3" />
+                                    <div className="h-4 bg-muted rounded w-1/2 mb-2" />
+                                    <div className="h-3 bg-muted rounded w-1/3" />
+                                </CardContent>
+                            </Card>
                         ))}
                     </div>
                 ) : users.length === 0 ? (
-                    // Empty State
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center text-gray-500 mt-8">
-                        <p className="text-xl font-medium text-gray-900 mb-2">No users found</p>
-                        <p>Try adjusting your search or switching roles.</p>
-                    </div>
+                    <Card className="text-center py-12">
+                        <CardContent><p className="text-muted-foreground">No users found. Try adjusting your search.</p></CardContent>
+                    </Card>
                 ) : (
-                    // Value State
-                    <>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {users.map((user) => (
-                                <UserCard
-                                    key={user.id}
-                                    user={user}
-                                    viewerRole={viewerRole}
-                                    targetRole={role}
-                                />
-                            ))}
-                        </div>
-
-                        {hasMore && (
-                            <div className="mt-12 text-center">
-                                <button
-                                    onClick={loadMore}
-                                    disabled={loadingMore}
-                                    className="px-6 py-3 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors shadow-sm disabled:opacity-50"
-                                >
-                                    {loadingMore ? "Loading more..." : "Load More Users"}
-                                </button>
-                            </div>
-                        )}
-                    </>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {users.map((user) => (
+                            <Card key={user.id} className="hover:shadow-md transition-shadow">
+                                <CardContent className="flex flex-col items-center p-6 text-center">
+                                    <Avatar className="h-16 w-16 mb-3">
+                                        <AvatarImage src={user.avatar_url} alt={user.name} />
+                                        <AvatarFallback className="text-lg">{user.name?.[0] || "?"}</AvatarFallback>
+                                    </Avatar>
+                                    <p className="font-semibold">{user.name}</p>
+                                    <Badge variant="secondary" className="text-xs mt-1 capitalize">{user.role}</Badge>
+                                    <p className="text-xs text-muted-foreground mt-1 truncate w-full">{user.email}</p>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
                 )}
             </div>
-        </div>
+        </DashboardShell>
     );
 }
 
-// Wrap in Suspense because we rely on useSearchParams which reads client-side routing params
 export default function ExplorePage() {
     return (
         <AuthGuard>
-            <Suspense fallback={
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-indigo-600"></div>
-                </div>
-            }>
+            <Suspense fallback={<DashboardShell><div className="flex items-center justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-4 border-muted border-t-primary"></div></div></DashboardShell>}>
                 <ExploreContent />
             </Suspense>
         </AuthGuard>
