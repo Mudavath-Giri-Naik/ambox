@@ -8,6 +8,8 @@ export default function CreateProjectModal({ onClose, onCreate }) {
     const [description, setDescription] = useState("");
     const [platform, setPlatform] = useState("instagram");
     const [editorId, setEditorId] = useState("");
+    const [deadline, setDeadline] = useState("");
+    const [priority, setPriority] = useState("normal");
     const [editors, setEditors] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -34,6 +36,8 @@ export default function CreateProjectModal({ onClose, onCreate }) {
                 description: description.trim(),
                 platform,
                 editorId: editorId || null,
+                deadline: deadline || null,
+                priority,
             });
             onClose();
         } catch (err) {
@@ -88,6 +92,33 @@ export default function CreateProjectModal({ onClose, onCreate }) {
                             <option value="youtube">YouTube</option>
                             <option value="other">Other</option>
                         </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Deadline (optional)</label>
+                            <input
+                                type="date"
+                                value={deadline}
+                                onChange={(e) => setDeadline(e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                                disabled={loading}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                            <select
+                                value={priority}
+                                onChange={(e) => setPriority(e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+                                disabled={loading}
+                            >
+                                <option value="low">Low</option>
+                                <option value="normal">Normal</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div>
