@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AlertCircle, ClipboardList, MessageSquare, Check } from "lucide-react";
 import {
     Table,
     TableBody,
@@ -52,6 +53,7 @@ function EditorDashboardContent() {
     const [userId, setUserId] = useState(null);
     const [projects, setProjects] = useState([]);
     const [uploadsMap, setUploadsMap] = useState({});
+    const [rawFootageMap, setRawFootageMap] = useState({});
     const [loading, setLoading] = useState(true);
     const [uploadingId, setUploadingId] = useState(null);
     const fileInputRef = useRef(null);
@@ -71,15 +73,21 @@ function EditorDashboardContent() {
             const projectIds = list.map((p) => p.id);
             const { data: versions } = await supabase
                 .from("project_versions")
-                .select("project_id")
-                .in("project_id", projectIds)
-                .eq("uploaded_by", user.id);
+                .select("project_id, type")
+                .in("project_id", projectIds);
 
             const map = {};
+            const rawMap = {};
             (versions || []).forEach((v) => {
-                map[v.project_id] = (map[v.project_id] || 0) + 1;
+                if (v.type === "edited" || (!v.type && v.version_number > 0)) {
+                    map[v.project_id] = (map[v.project_id] || 0) + 1;
+                }
+                if (v.type === "raw" || (!v.type && v.version_number === 0)) {
+                    rawMap[v.project_id] = (rawMap[v.project_id] || 0) + 1;
+                }
             });
             setUploadsMap(map);
+            setRawFootageMap(rawMap);
         }
 
         setLoading(false);
@@ -100,7 +108,10 @@ function EditorDashboardContent() {
         const user = await getCurrentUser();
         if (!user) return;
         const nextVersion = await getNextVersionNumber(projectId);
-        await uploadVersion(projectId, user.id, file, nextVersion, "edited");
+        const result = await uploadVersion(projectId, user.id, file, nextVersion, "edited");
+        if (result.error) {
+            alert("Upload failed: " + result.error.message);
+        }
         await loadData();
         setUploadingId(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -147,7 +158,7 @@ function EditorDashboardContent() {
                     return (
                         <div className="space-y-3">
                             <h2 className="text-lg font-semibold flex items-center gap-2">
-                                ⚠️ Needs Your Action
+                                <AlertCircle className="h-5 w-5 text-amber-500" /> Needs Your Action
                                 <Badge variant="secondary" className="text-xs">{actionProjects.length}</Badge>
                             </h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -205,7 +216,7 @@ function EditorDashboardContent() {
                 ) : projects.length === 0 ? (
                     <Card>
                         <CardContent className="py-16 text-center">
-                            <div className="text-4xl mb-3">📋</div>
+                            <div className="flex justify-center mb-3"><ClipboardList className="h-10 w-10 text-muted-foreground/40" /></div>
                             <p className="text-muted-foreground">No projects assigned yet. Creators will assign projects to you.</p>
                         </CardContent>
                     </Card>
@@ -221,6 +232,7 @@ function EditorDashboardContent() {
                                         <TableHead>Creator</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Deadline</TableHead>
+                                        <TableHead className="text-center">Raw</TableHead>
                                         <TableHead className="text-center">Your Uploads</TableHead>
                                         <TableHead>Last Activity</TableHead>
                                         <TableHead className="text-center">Unread</TableHead>
@@ -258,6 +270,13 @@ function EditorDashboardContent() {
                                                 <DeadlineText deadline={project.deadline} />
                                             </TableCell>
                                             <TableCell className="text-center">
+                                                {(rawFootageMap[project.id] || 0) > 0 ? (
+                                                    <Badge variant="secondary" className="text-[10px] bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 gap-1.5 px-1.5"><Check className="h-3 w-3" /> {rawFootageMap[project.id]}</Badge>
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground">None</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-center">
                                                 <span className="text-sm font-mono">{uploadsMap[project.id] || 0}</span>
                                             </TableCell>
                                             <TableCell>
@@ -266,7 +285,7 @@ function EditorDashboardContent() {
                                             <TableCell className="text-center">
                                                 {(project.unread_editor_messages || 0) > 0 ? (
                                                     <Badge variant="destructive" className="rounded-full px-1.5 py-0.5 text-[10px]">
-                                                        💬 {project.unread_editor_messages}
+                                                        <div className="flex items-center justify-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" /> {project.unread_editor_messages}</div>
                                                     </Badge>
                                                 ) : null}
                                             </TableCell>

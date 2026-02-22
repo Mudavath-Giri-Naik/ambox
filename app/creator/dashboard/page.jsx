@@ -11,6 +11,7 @@ import {
     requestChanges,
 } from "@/lib/supabase/helpers";
 import { supabase } from "@/lib/supabaseClient";
+import VoiceRecorder from "../../components/VoiceRecorder";
 import AuthGuard from "../../components/AuthGuard";
 import DashboardShell from "../../components/DashboardShell";
 import StatusBadge, { PlatformBadge, PriorityBadge, DeadlineText, isOverdue, getDeadlineText, getDeadlineColor } from "../../components/StatusBadge";
@@ -20,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AlertCircle, Folder, MessageSquare } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -76,8 +78,10 @@ function CreatorDashboardContent() {
     const [formEditor, setFormEditor] = useState("");
     const [formDeadline, setFormDeadline] = useState("");
     const [formPriority, setFormPriority] = useState("normal");
+    const [formAudioBlob, setFormAudioBlob] = useState(null);
     const [editors, setEditors] = useState([]);
     const [creating, setCreating] = useState(false);
+    const [creatingStatus, setCreatingStatus] = useState("");
 
     const loadData = async () => {
         const user = await getCurrentUser();
@@ -119,12 +123,45 @@ function CreatorDashboardContent() {
     const handleCreate = async () => {
         if (!formTitle.trim()) return;
         setCreating(true);
+        setCreatingStatus("Creating project...");
         const user = await getCurrentUser();
-        if (!user) return;
-        await createProject({ title: formTitle.trim(), description: formDesc.trim(), platform: formPlatform, creatorId: user.id, editorId: formEditor || null, deadline: formDeadline || null, priority: formPriority });
+        if (!user) { setCreating(false); return; }
+
+        const { project: newProject, error } = await createProject({
+            title: formTitle.trim(), description: formDesc.trim(), platform: formPlatform,
+            creatorId: user.id, editorId: formEditor || null, deadline: formDeadline || null, priority: formPriority
+        });
+
+        // Upload voice brief if recorded
+        if (!error && newProject && formAudioBlob) {
+            try {
+                setCreatingStatus("Uploading voice brief...");
+                const ext = formAudioBlob.type.includes("ogg") ? "ogg" : "webm";
+                const fileName = `briefs/${newProject.id}/voice_${Date.now()}.${ext}`;
+                const { error: uploadErr } = await supabase.storage
+                    .from("project-briefs")
+                    .upload(fileName, formAudioBlob, { contentType: formAudioBlob.type || "audio/webm" });
+
+                if (!uploadErr) {
+                    const { data: urlData } = supabase.storage.from("project-briefs").getPublicUrl(fileName);
+                    const voiceUrl = urlData?.publicUrl;
+
+                    if (voiceUrl) {
+                        await supabase.from("projects").update({ voice_brief_url: voiceUrl }).eq("id", newProject.id);
+                        setCreatingStatus("Processing transcript...");
+                        // Fire and forget — edge function handles transcription async
+                        supabase.functions.invoke("transcribe-brief", {
+                            body: { project_id: newProject.id, audio_url: voiceUrl }
+                        }).catch(() => { }); // silence if function not yet deployed
+                    }
+                }
+            } catch (_) { /* non-blocking */ }
+        }
+
         setCreateOpen(false);
-        setFormTitle(""); setFormDesc(""); setFormPlatform("instagram"); setFormEditor(""); setFormDeadline(""); setFormPriority("normal");
-        setCreating(false);
+        setFormTitle(""); setFormDesc(""); setFormPlatform("instagram"); setFormEditor("");
+        setFormDeadline(""); setFormPriority("normal"); setFormAudioBlob(null);
+        setCreating(false); setCreatingStatus("");
         await loadData();
     };
 
@@ -180,7 +217,7 @@ function CreatorDashboardContent() {
                     return (
                         <div className="space-y-3">
                             <h2 className="text-lg font-semibold flex items-center gap-2">
-                                ⚠️ Needs Your Attention
+                                <AlertCircle className="h-5 w-5 text-amber-500" /> Needs Your Attention
                                 <Badge variant="secondary" className="text-xs">{reviewProjects.length}</Badge>
                             </h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -229,7 +266,7 @@ function CreatorDashboardContent() {
                 ) : projects.length === 0 ? (
                     <Card>
                         <CardContent className="py-16 text-center">
-                            <div className="text-4xl mb-3">📁</div>
+                            <div className="flex justify-center mb-3"><Folder className="h-10 w-10 text-muted-foreground/40" /></div>
                             <p className="text-muted-foreground mb-4">No projects yet.</p>
                             <Button onClick={openCreateDialog}>Create Your First Project</Button>
                         </CardContent>
@@ -293,7 +330,7 @@ function CreatorDashboardContent() {
                                             <TableCell className="text-center">
                                                 {(project.unread_creator_messages || 0) > 0 ? (
                                                     <Badge variant="destructive" className="rounded-full px-1.5 py-0.5 text-[10px]">
-                                                        💬 {project.unread_creator_messages}
+                                                        <div className="flex items-center justify-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" /> {project.unread_creator_messages}</div>
                                                     </Badge>
                                                 ) : null}
                                             </TableCell>
@@ -335,6 +372,7 @@ function CreatorDashboardContent() {
                             <label className="text-sm font-medium">Description</label>
                             <Input value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="Brief for the editor..." disabled={creating} />
                         </div>
+                        <VoiceRecorder onChange={setFormAudioBlob} disabled={creating} />
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Deadline (optional)</label>
@@ -375,8 +413,10 @@ function CreatorDashboardContent() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>Cancel</Button>
-                        <Button onClick={handleCreate} disabled={creating || !formTitle.trim()}>{creating ? "Creating..." : "Create"}</Button>
+                        <Button variant="outline" onClick={() => { setCreateOpen(false); setFormAudioBlob(null); }} disabled={creating}>Cancel</Button>
+                        <Button onClick={handleCreate} disabled={creating || !formTitle.trim()}>
+                            {creating ? (creatingStatus || "Creating...") : "Create Project"}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

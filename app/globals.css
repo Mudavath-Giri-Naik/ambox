@@ -12,8 +12,20 @@
     -moz-osx-font-smoothing: grayscale;
     @apply bg-background text-foreground;
   }
+
   * {
     @apply border-border outline-ring/50;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 

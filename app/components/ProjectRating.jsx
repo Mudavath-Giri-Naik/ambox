@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { CheckCircle, Star } from "lucide-react";
 
 function StarIcon({ filled, half, size = 20 }) {
     return (
@@ -133,7 +134,7 @@ export default function ProjectRating({ project, isCreator, onRated }) {
         return (
             <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/10 dark:border-green-900">
                 <CardContent className="p-4 text-center">
-                    <p className="text-sm font-medium text-green-700 dark:text-green-400">✅ Thanks for your rating!</p>
+                    <p className="text-sm font-medium text-green-700 dark:text-green-400 flex items-center justify-center gap-1.5"><CheckCircle className="h-4 w-4" /> Thanks for your rating!</p>
                 </CardContent>
             </Card>
         );
@@ -171,7 +172,7 @@ export default function ProjectRating({ project, isCreator, onRated }) {
         <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/10 dark:border-amber-900">
             <CardContent className="p-5 space-y-4">
                 <div>
-                    <p className="font-semibold text-sm">⭐ Rate this project</p>
+                    <p className="font-semibold text-sm flex items-center gap-1.5"><Star className="h-4 w-4 text-amber-500 fill-amber-500" /> Rate this project</p>
                     <p className="text-xs text-muted-foreground">How was your experience working with this editor?</p>
                 </div>
 

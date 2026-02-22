@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Palette, Scissors } from "lucide-react";
 
 export default function OnboardingPage() {
     const router = useRouter();
@@ -88,7 +89,7 @@ export default function OnboardingPage() {
                                 onClick={() => handleCreateProfile("creator")}
                                 disabled={saving}
                             >
-                                <span className="text-2xl">🎨</span>
+                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mb-1 text-primary"><Palette className="h-4 w-4" /></div>
                                 <span className="font-semibold">Creator</span>
                             </Button>
                             <Button
@@ -97,7 +98,7 @@ export default function OnboardingPage() {
                                 onClick={() => handleCreateProfile("editor")}
                                 disabled={saving}
                             >
-                                <span className="text-2xl">✂️</span>
+                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mb-1 text-primary"><Scissors className="h-4 w-4" /></div>
                                 <span className="font-semibold">Editor</span>
                             </Button>
                         </div>

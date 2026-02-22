@@ -26,6 +26,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LayoutDashboard, Search, Bell, Settings, Compass } from "lucide-react";
 
 export function AppSidebar() {
     const router = useRouter();
@@ -33,6 +34,7 @@ export function AppSidebar() {
 
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [totalUnread, setTotalUnread] = useState(0);
 
     useEffect(() => {
         const load = async () => {
@@ -40,6 +42,19 @@ export function AppSidebar() {
             if (!user) return;
             const { profile: p } = await getUserProfile(user.id);
             setProfile(p);
+
+            // Fetch total unread message count
+            if (p?.role) {
+                const field = p.role === "creator" ? "unread_creator_messages" : "unread_editor_messages";
+                const { data: projects } = await supabase
+                    .from("projects")
+                    .select(`id, ${field}`)
+                    .or(`creator_id.eq.${user.id},editor_id.eq.${user.id}`);
+
+                const total = (projects || []).reduce((sum, proj) => sum + (proj[field] || 0), 0);
+                setTotalUnread(total);
+            }
+
             setLoading(false);
         };
         load();
@@ -55,13 +70,19 @@ export function AppSidebar() {
 
     const navItems = isCreator
         ? [
-            { title: "Dashboard", path: "/creator/dashboard", icon: "📊" },
-            { title: "Explore Editors", path: "/explore?role=editor", icon: "🔍" },
+            { title: "Dashboard", path: "/creator/dashboard", icon: LayoutDashboard },
+            { title: "Explore Editors", path: "/explore?role=editor", icon: Compass },
         ]
         : [
-            { title: "Dashboard", path: "/editor/dashboard", icon: "📊" },
-            { title: "Explore Creators", path: "/explore?role=creator", icon: "🔍" },
+            { title: "Dashboard", path: "/editor/dashboard", icon: LayoutDashboard },
+            { title: "Explore Creators", path: "/explore?role=creator", icon: Compass },
         ];
+
+    const extraNavItems = [
+        { title: "Notifications", path: "/notifications", icon: Bell, badge: totalUnread },
+        { title: "Search", path: "/search", icon: Search },
+        { title: "Settings", path: "/settings", icon: Settings },
+    ];
 
     if (loading) return null;
 
@@ -101,9 +122,34 @@ export function AppSidebar() {
                                         onClick={() => router.push(item.path)}
                                         className="cursor-pointer"
                                     >
-                                        <span>{item.icon}</span>
+                                        <span><item.icon className="h-4 w-4" /></span>
                                         <span>{item.title}</span>
                                     </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            ))}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                <SidebarGroup>
+                    <SidebarGroupLabel>Tools</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            {extraNavItems.map((item) => (
+                                <SidebarMenuItem key={item.title}>
+                                    <SidebarMenuButton
+                                        isActive={pathname === item.path}
+                                        onClick={() => router.push(item.path)}
+                                        className="cursor-pointer"
+                                    >
+                                        <span><item.icon className="h-4 w-4" /></span>
+                                        <span>{item.title}</span>
+                                    </SidebarMenuButton>
+                                    {item.badge > 0 && (
+                                        <SidebarMenuBadge className="bg-destructive text-destructive-foreground rounded-full text-[10px] px-1.5">
+                                            {item.badge}
+                                        </SidebarMenuBadge>
+                                    )}
                                 </SidebarMenuItem>
                             ))}
                         </SidebarMenu>
@@ -146,6 +192,10 @@ export function AppSidebar() {
                                         <span className="truncate text-xs text-muted-foreground">{profile?.email}</span>
                                     </div>
                                 </div>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer">
+                                    <Settings className="h-4 w-4 mr-2" /> Settings
+                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive">
                                     Sign Out

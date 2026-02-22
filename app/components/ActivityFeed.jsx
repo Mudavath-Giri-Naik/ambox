@@ -6,14 +6,15 @@ import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getStatusLabel } from "./StatusBadge";
+import { FolderOpen, UserPlus, Upload, RefreshCw, MessageSquare, Star, ClipboardList } from "lucide-react";
 
 const ACTION_ICONS = {
-    project_created: "📁",
-    editor_assigned: "👤",
-    version_uploaded: "⬆️",
-    status_changed: "🔄",
-    message_sent: "💬",
-    project_rated: "⭐",
+    project_created: <FolderOpen className="h-5 w-5 text-blue-500" />,
+    editor_assigned: <UserPlus className="h-5 w-5 text-indigo-500" />,
+    version_uploaded: <Upload className="h-5 w-5 text-green-500" />,
+    status_changed: <RefreshCw className="h-5 w-5 text-orange-500" />,
+    message_sent: <MessageSquare className="h-5 w-5 text-purple-500" />,
+    project_rated: <Star className="h-5 w-5 text-yellow-500" />,
 };
 
 function timeAgo(dateString) {
@@ -154,9 +155,7 @@ export default function ActivityFeed({ role, userId }) {
                             className="flex items-start gap-3 px-6 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
                             onClick={() => activity.project?.id && router.push(`/project/${activity.project.id}`)}
                         >
-                            <span className="text-lg mt-0.5 shrink-0">
-                                {ACTION_ICONS[activity.action] || "📋"}
-                            </span>
+                            {ACTION_ICONS[activity.action] || <ClipboardList className="h-5 w-5 text-muted-foreground" />}
                             <div className="min-w-0 flex-1">
                                 <p className="text-sm leading-snug">
                                     {formatActivity(activity, userId)}
