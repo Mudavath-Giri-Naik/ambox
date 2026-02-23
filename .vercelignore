@@ -1,0 +1,8 @@
+# Ignore Supabase edge function files during Vercel build
+supabase-edge-function/
+
+# Ignore documentation files
+AUDIO_PROCESSING_FIXED.md
+SUPABASE_SETUP_CHECKLIST.md
+SUPABASE_DEPLOYMENT_GUIDE.md
+QUICK_START.md

@@ -40,7 +40,7 @@ supabase link --project-ref YOUR_PROJECT_REF
 mkdir -p supabase/functions/transcribe-brief
 
 # Copy the edge function code
-# Copy the content from supabase-edge-function-transcribe-brief.ts 
+# Copy the content from supabase-edge-function/transcribe-brief-index.ts 
 # to supabase/functions/transcribe-brief/index.ts
 ```
 

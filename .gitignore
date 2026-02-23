@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# supabase edge functions (for Deno, not Next.js)
+supabase-edge-function/
+
+# documentation
+AUDIO_PROCESSING_FIXED.md
+SUPABASE_SETUP_CHECKLIST.md
+SUPABASE_DEPLOYMENT_GUIDE.md
+QUICK_START.md
