@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
 // Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env["Gemini API Key"]);
+const genAI = new GoogleGenerativeAI(process.env["Gemini_API_Key"]);
 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 // Initialize Supabase Admin (needed for server-side updates)
