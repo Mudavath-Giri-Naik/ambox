@@ -149,10 +149,12 @@ function CreatorDashboardContent() {
                     if (voiceUrl) {
                         await supabase.from("projects").update({ voice_brief_url: voiceUrl }).eq("id", newProject.id);
                         setCreatingStatus("Processing transcript...");
-                        // Fire and forget — edge function handles transcription async
-                        supabase.functions.invoke("transcribe-brief", {
-                            body: { project_id: newProject.id, audio_url: voiceUrl }
-                        }).catch(() => { }); // silence if function not yet deployed
+                        // Call the local Next.js API route instead of Supabase Edge Function
+                        fetch("/api/transcribe-brief", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ project_id: newProject.id, audio_url: voiceUrl })
+                        }).catch(() => { }); // silent if fails
                     }
                 }
             } catch (_) { /* non-blocking */ }
