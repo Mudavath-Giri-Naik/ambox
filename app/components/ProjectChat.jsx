@@ -84,7 +84,7 @@ export default function ProjectChat({ projectId, currentUser, userProfile, proje
     return (
         <div className="flex flex-col h-full bg-background">
             {/* Messages area with gray background */}
-            <div className="flex-1 overflow-y-auto bg-[#F5F6F7] dark:bg-neutral-900/50 px-6 py-4">
+            <div className="flex-1 overflow-y-auto bg-[#F5F6F7] dark:bg-neutral-900/50 px-3 sm:px-6 py-4">
                 {loading ? (
                     <div className="flex items-center justify-center h-full">
                         <div className="animate-spin rounded-full h-6 w-6 border-2 border-muted border-t-primary" />
@@ -153,7 +153,7 @@ export default function ProjectChat({ projectId, currentUser, userProfile, proje
             </div>
 
             {/* Input bar — pinned to bottom */}
-            <div className="shrink-0 border-t bg-background px-6 py-3">
+            <div className="shrink-0 border-t bg-background px-3 sm:px-6 py-3">
                 <form onSubmit={handleSend} className="flex items-center gap-3 max-w-[760px] mx-auto">
                     <Input
                         ref={inputRef}

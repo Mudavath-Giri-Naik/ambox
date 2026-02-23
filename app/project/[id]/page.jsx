@@ -162,7 +162,7 @@ function ProjectPageContent() {
 
                 {/* ───── PROJECT HEADER ───── */}
                 {/* ───── SLIM TAB BAR ───── */}
-                <div className="shrink-0 border-b bg-background px-4 py-0 flex items-center gap-1">
+                <div className="shrink-0 border-b bg-background flex items-center gap-1 overflow-x-auto no-scrollbar">
                     {/* Back button */}
                     <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground" onClick={() => router.back()}>
                         <ArrowLeft className="h-4 w-4" />
@@ -184,7 +184,7 @@ function ProjectPageContent() {
                                     }`}
                             >
                                 <span><tab.icon className="h-4 w-4" /></span>
-                                {tab.label}
+                                <span className="hidden sm:inline">{tab.label}</span>
                             </button>
                         );
                     })}
@@ -193,14 +193,15 @@ function ProjectPageContent() {
 
                     {/* Action buttons (right side) */}
                     {isCreator && (
-                        <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={() => setShowAssignModal(true)}>
+                        <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 shrink-0" onClick={() => setShowAssignModal(true)}>
                             <UserPlus className="h-3.5 w-3.5" />
-                            {project.editor ? "Reassign" : "Assign Editor"}
+                            <span className="hidden sm:inline">{project.editor ? "Reassign" : "Assign Editor"}</span>
                         </Button>
                     )}
                     {isCreator && project.status === "approved" && (
-                        <Button size="sm" className="h-7 text-xs gap-1.5" onClick={async () => { await completeProject(projectId); await loadData(); }}>
-                            <CheckCircle className="h-3.5 w-3.5" /> Complete
+                        <Button size="sm" className="h-7 text-xs gap-1.5 shrink-0" onClick={async () => { await completeProject(projectId); await loadData(); }}>
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Complete</span>
                         </Button>
                     )}
                     {isEditor && project.status === "pending_acceptance" && (
@@ -216,7 +217,7 @@ function ProjectPageContent() {
                 </div>
 
                 {/* ───── MAIN CONTENT (left panel + right chat) ───── */}
-                <div className="flex flex-1 overflow-hidden">
+                <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
 
                     {/* LEFT: Tab content */}
                     <div className="flex-1 flex flex-col overflow-hidden relative">
@@ -224,7 +225,7 @@ function ProjectPageContent() {
 
                             {/* ═══ TAB 1: REQUIREMENTS ═══ */}
                             {activeTab === "requirements" && (
-                                <div className="p-6 space-y-6 max-w-4xl">
+                                <div className="p-3 sm:p-6 space-y-6 max-w-4xl">
 
                                     {/* ── Section A: Raw Materials (FIRST) ── */}
                                     <div>
@@ -384,7 +385,7 @@ function ProjectPageContent() {
 
                             {/* ═══ TAB 2: VERSIONS ═══ */}
                             {activeTab === "versions" && (
-                                <div className="p-6 space-y-5 max-w-4xl">
+                                <div className="p-3 sm:p-6 space-y-5 max-w-4xl">
                                     {/* Header row */}
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2.5">
@@ -494,7 +495,7 @@ function ProjectPageContent() {
 
                             {/* ═══ TAB 3: PROJECT INFO ═══ */}
                             {activeTab === "info" && (
-                                <div className="p-6 space-y-5 max-w-3xl">
+                                <div className="p-3 sm:p-6 space-y-5 max-w-3xl">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
                                         {/* Project Details */}
@@ -602,7 +603,7 @@ function ProjectPageContent() {
                     </div>
 
                     {/* RIGHT: Chat — always visible */}
-                    <div className="w-[360px] shrink-0 border-l flex flex-col overflow-hidden">
+                    <div className="w-full lg:w-[360px] shrink-0 border-t lg:border-l flex flex-col overflow-hidden h-[45vh] lg:h-auto">
                         <div className="flex items-center gap-2 px-4 py-2.5 border-b bg-muted/20 shrink-0">
                             <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
                             <span className="text-[13px] font-medium">Chat</span>

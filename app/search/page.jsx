@@ -65,7 +65,7 @@ function SearchContent() {
 
     return (
         <DashboardShell>
-            <div className="p-6 space-y-6">
+            <div className="p-3 sm:p-6 space-y-6">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><Search className="h-6 w-6 text-foreground" /> Search Projects</h1>
                     <p className="text-muted-foreground text-sm">Search and filter across all your projects.</p>
@@ -158,7 +158,7 @@ function SearchContent() {
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3 min-w-0">
                                             <div className="min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
+                                                <div className="flex items-center gap-2 mb-1 flex-wrap">
                                                     <span className="text-sm font-medium truncate">{project.title}</span>
                                                     <PlatformBadge platform={project.platform} />
                                                     <StatusBadge status={project.status} />

@@ -60,7 +60,7 @@ function ExploreContent() {
 
     return (
         <DashboardShell>
-            <div className="p-6 space-y-6">
+            <div className="p-3 sm:p-6 space-y-6">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Explore Community</h1>
                     <p className="text-muted-foreground text-sm">Find the perfect collaborator for your next project.</p>
@@ -73,8 +73,8 @@ function ExploreContent() {
                             <TabsTrigger value="creator">Creators</TabsTrigger>
                         </TabsList>
                     </Tabs>
-                    <form onSubmit={handleSearch} className="flex gap-2">
-                        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name..." className="w-48" />
+                    <form onSubmit={handleSearch} className="flex gap-2 w-full sm:w-auto">
+                        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name..." className="flex-1 sm:w-48" />
                         <Button type="submit" variant="outline" size="sm">Search</Button>
                     </form>
                 </div>

@@ -118,7 +118,7 @@ function NotificationsContent() {
 
     return (
         <DashboardShell>
-            <div className="p-6 space-y-6">
+            <div className="p-3 sm:p-6 space-y-6">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
                         <Bell className="h-6 w-6 text-foreground" /> Notifications
@@ -162,7 +162,7 @@ function NotificationsContent() {
 
                                         {/* Content */}
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
+                                            <div className="flex items-center gap-2 mb-1 flex-wrap">
                                                 <span className={`text-sm truncate ${thread.unread > 0 ? "font-bold" : "font-medium"}`}>
                                                     {thread.title}
                                                 </span>

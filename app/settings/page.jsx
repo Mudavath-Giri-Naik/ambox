@@ -132,7 +132,7 @@ function SettingsContent() {
 
     return (
         <DashboardShell>
-            <div className="p-6 space-y-6 max-w-2xl">
+            <div className="p-3 sm:p-6 space-y-6 max-w-2xl">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><Settings className="h-6 w-6 text-foreground" /> Settings</h1>
                     <p className="text-muted-foreground text-sm">Manage your profile and account settings.</p>
@@ -143,7 +143,7 @@ function SettingsContent() {
                     <CardHeader>
                         <CardTitle className="text-base">Profile Photo</CardTitle>
                     </CardHeader>
-                    <CardContent className="flex items-center gap-6">
+                    <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
                         <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} className="hidden" accept="image/*" />
                         <Avatar className="h-20 w-20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                             <AvatarImage src={avatarUrl} />

@@ -176,7 +176,7 @@ function CreatorDashboardContent() {
 
     return (
         <DashboardShell>
-            <div className="p-6 space-y-6">
+            <div className="p-3 sm:p-6 space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
@@ -275,7 +275,33 @@ function CreatorDashboardContent() {
                     </Card>
                 ) : (
                     <Card>
-                        <div className="overflow-x-auto">
+                        {/* ── Mobile card list (< sm) ── */}
+                        <div className="block sm:hidden divide-y">
+                            {projects.map((project) => (
+                                <div key={project.id} className="p-3 space-y-2 cursor-pointer" onClick={() => router.push(`/project/${project.id}`)}>
+                                    <div className="flex items-start justify-between gap-2">
+                                        <p className="font-medium text-sm truncate">{project.title}</p>
+                                        <StatusBadge status={project.status} />
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <PlatformBadge platform={project.platform} />
+                                        <PriorityBadge priority={project.priority} />
+                                        {project.editor ? (
+                                            <div className="flex items-center gap-1.5">
+                                                <Avatar className="h-4 w-4"><AvatarImage src={project.editor.avatar_url} /><AvatarFallback className="text-[9px]">{project.editor.name?.[0]}</AvatarFallback></Avatar>
+                                                <span className="text-xs text-muted-foreground">{project.editor.name}</span>
+                                            </div>
+                                        ) : <span className="text-xs text-muted-foreground">No editor</span>}
+                                        {project.deadline && <DeadlineText deadline={project.deadline} />}
+                                    </div>
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => router.push(`/project/${project.id}`)}>View</Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {/* ── Desktop table (≥ sm) ── */}
+                        <div className="hidden sm:block overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>

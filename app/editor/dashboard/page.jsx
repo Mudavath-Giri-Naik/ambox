@@ -126,7 +126,7 @@ function EditorDashboardContent() {
     return (
         <DashboardShell>
             <input type="file" ref={fileInputRef} onChange={handleFileSelected} className="hidden" accept="video/*" />
-            <div className="p-6 space-y-6">
+            <div className="p-3 sm:p-6 space-y-6">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
                     <p className="text-muted-foreground text-sm">Your assigned projects and tasks.</p>
@@ -222,7 +222,37 @@ function EditorDashboardContent() {
                     </Card>
                 ) : (
                     <Card>
-                        <div className="overflow-x-auto">
+                        {/* ── Mobile card list (< sm) ── */}
+                        <div className="block sm:hidden divide-y">
+                            {projects.map((project) => (
+                                <div key={project.id} className="p-3 space-y-2" onClick={() => router.push(`/project/${project.id}`)}>                                    <div className="flex items-start justify-between gap-2">
+                                    <p className="font-medium text-sm truncate">{project.title}</p>
+                                    <StatusBadge status={project.status} />
+                                </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <PlatformBadge platform={project.platform} />
+                                        <PriorityBadge priority={project.priority} />
+                                        {project.creator && (
+                                            <div className="flex items-center gap-1.5">
+                                                <Avatar className="h-4 w-4"><AvatarImage src={project.creator.avatar_url} /><AvatarFallback className="text-[9px]">{project.creator.name?.[0]}</AvatarFallback></Avatar>
+                                                <span className="text-xs text-muted-foreground">{project.creator.name}</span>
+                                            </div>
+                                        )}
+                                        <DeadlineText deadline={project.deadline} />
+                                    </div>
+                                    <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-2">
+                                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => router.push(`/project/${project.id}`)}>View</Button>
+                                        {["in_edit", "changes_requested", "briefing"].includes(project.status) && (
+                                            <Button size="sm" variant="outline" className="h-7 text-xs" disabled={uploadingId === project.id} onClick={() => handleUploadClick(project.id)}>
+                                                {uploadingId === project.id ? "Uploading..." : "Upload"}
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {/* ── Desktop table (≥ sm) ── */}
+                        <div className="hidden sm:block overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
